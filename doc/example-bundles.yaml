@@ -1,0 +1,12 @@
+--- 
+- :output_file: main.js
+  :input_directory: main
+  :input_files:
+  - main/uranium-pretty.js
+- :output_file: checkout.js
+  :input_directory: checkout
+- :output_file: bottom.js
+  :input_files:
+  - fancy.js
+  - super.js
+  - cookies.js
