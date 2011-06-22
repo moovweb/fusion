@@ -1,9 +1,0 @@
---- 
-- :output_file: main.js
-  :input_directory: main
-  :input_files:
-  - main/uranium-pretty.js
-- :output_file: test.js
-  :input_files: 
-  - desktop_link.js
-  - eluminate.js

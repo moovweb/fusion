@@ -22,4 +22,4 @@ The optimized mode uses Google Closure Compiler's SIMPLE_OPTIMIZATIONS flag -- w
 
 ### Example ###
 
-See the example [bundle.yaml](doc/example-bundles.yaml) file. This example config will create 3 bundles: main.js / checkout.js / bottom.js
+See the example [bundle.yaml](fusion/blob/master/doc/example-bundles.yaml) file. This example config will create 3 bundles: main.js / checkout.js / bottom.js
