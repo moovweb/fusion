@@ -1,5 +1,9 @@
 require 'yaml'
 require 'open4'
+require 'uri'
+require 'rubygems' #I'm getting an error loading mechanize ... do I need to load this?
+require 'mechanize'
+require 'logger'
 
 module Fusion
 
@@ -19,6 +23,8 @@ module Fusion
 
     def initialize
       @bundle_options = Fusion.instance_variable_get('@options') 
+      @log = @bundle_options[:logger].nil? ? Logger.new(STDOUT) : @bundle_options[:logger]
+
       @bundle_configs = YAML::load(File.open(@bundle_options[:bundle_file_path]))
     end
 
@@ -29,7 +35,7 @@ module Fusion
         bundle(config)
       end
 
-      puts "Javascript Reloaded #{@bundle_configs.size} bundle(s) (#{Time.now - start}s)"
+      @log.debug "Javascript Reloaded #{@bundle_configs.size} bundle(s) (#{Time.now - start}s)"
     end
 
     def gather_files(config)
@@ -37,7 +43,15 @@ module Fusion
 
       if(config[:input_files])
         config[:input_files].each do |input_file|
-          input_files << File.join(@bundle_options[:project_path], input_file)
+          @log.debug "Remote file? #{!(input_file =~ URI::regexp).nil?}"
+
+          if (input_file =~ URI::regexp).nil?
+            # Not a URL
+            input_files << File.join(@bundle_options[:project_path], input_file)
+          else
+            # This is a remote file, if we don't have it, get it
+            input_files << get_remote_file(input_file)
+          end          
         end
       end
 
@@ -58,6 +72,32 @@ module Fusion
       raise Exception.new("Undefined js bundler output file") if config[:output_file].nil?
       File.join(@bundle_options[:project_path], config[:output_file])
     end
+
+    def get_remote_file(url)
+      filename = url.split("/").last
+      local_directory = File.join(@bundle_options[:project_path], ".remote")
+      local_file_path = File.join(local_directory, filename)
+      
+      return local_file_path if File.exists?(local_file_path)
+      
+      @log.debug "Fetching remote file (#{url})"
+
+      m = Mechanize.new
+      response = m.get(url)
+
+      raise Exception.new("Error downloading file (#{url}) -- returned code #{repsonse.code}") unless response.code == "200"
+      
+      @log.debug "Got file (#{url})"
+
+      unless Dir.exists?(local_directory)
+        Dir.mkdir(local_directory)
+      end
+                  
+      File.open(local_file_path,"w") {|f| f << response.body}
+      
+      local_file_path
+    end
+    
 
   end
 
