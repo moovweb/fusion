@@ -23,7 +23,7 @@ module Fusion
 
     def initialize
       @bundle_options = Fusion.instance_variable_get('@options') 
-      @log = @bundle_options[:logger].nil? ? Logger.new(STDOUT) : @bundle_options[:logger]
+      @log = @bundle_options[:logger] || Logger.new(STDOUT)
 
       @bundle_configs = YAML::load(File.open(@bundle_options[:bundle_file_path]))
     end
