@@ -2,7 +2,7 @@
 - :output_file: main.js
   :input_directory: main
   :input_files:
-  - main/uranium-pretty.js
+  - http://d1topzp4nao5hp.cloudfront.net/uranium/0.0.1/uranium-pretty.js
 - :output_file: checkout.js
   :input_directory: checkout
 - :output_file: bottom.js

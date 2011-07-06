@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "fusion"
-  s.version = "0.0.1"
+  s.version = "0.0.2"
   s.platform = Gem::Platform::RUBY
 
   s.authors = ["Sean Jezewski"]
@@ -14,4 +14,6 @@ Gem::Specification.new do |s|
   s.require_path = "lib"
   
   s.add_dependency "open4"
+  s.add_dependency "mechanize"
+
 end
