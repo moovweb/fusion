@@ -57,6 +57,12 @@ module Fusion
       if (config[:input_directory])
         directory = File.join(@bundle_options[:project_path],config[:input_directory])
 
+        unless File.exists?(directory)
+          @log.debug "Path #{directory} does not exist"
+          FileUtils.mkpath(directory)
+          @log.debug "Created path: #{directory}"
+        end
+
         file_names = Dir.open(directory).entries.sort.find_all {|filename| filename.end_with?(".js") }
 
         input_files += file_names.collect do |file_name|
