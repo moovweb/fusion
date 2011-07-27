@@ -43,8 +43,6 @@ module Fusion
 
       if(config[:input_files])
         config[:input_files].each do |input_file|
-          @log.debug "Remote file? #{!(input_file =~ URI::regexp).nil?}"
-
           if (input_file =~ URI::regexp).nil?
             # Not a URL
             input_files << File.join(@bundle_options[:project_path], input_file)
