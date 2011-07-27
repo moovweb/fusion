@@ -1,6 +1,7 @@
 require 'yaml'
 require 'open4'
 require 'uri'
+require 'cgi'
 require 'rubygems' #I'm getting an error loading mechanize ... do I need to load this?
 require 'mechanize'
 require 'logger'
@@ -72,7 +73,7 @@ module Fusion
     end
 
     def get_remote_file(url)
-      filename = url.split("/").last
+      filename = CGI.escape(url)
       local_directory = File.join(@bundle_options[:project_path], ".remote")
       local_file_path = File.join(local_directory, filename)
       
