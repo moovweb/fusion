@@ -131,6 +131,7 @@ module Fusion
 
       options << ["js_output_file", get_output_file(config)]
       options << ["compilation_level", "SIMPLE_OPTIMIZATIONS"]
+      options << ["language_in","ECMASCRIPT5"] # This will be compatible w all newer browsers, and helps us avoid old IE quirks
 
       gather_files(config).each do |input_file|
         options << ["js", input_file]
