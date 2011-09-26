@@ -1,10 +1,10 @@
 require 'yaml'
 require 'open4'
 require 'uri'
+require 'cgi'
 require 'rubygems' #I'm getting an error loading mechanize ... do I need to load this?
 require 'mechanize'
 require 'logger'
-require 'cgi'
 
 module Fusion
 
@@ -44,8 +44,6 @@ module Fusion
 
       if(config[:input_files])
         config[:input_files].each do |input_file|
-          @log.debug "Remote file? #{!(input_file =~ URI::regexp).nil?}"
-
           if (input_file =~ URI::regexp).nil?
             # Not a URL
             input_files << File.join(@bundle_options[:project_path], input_file)
@@ -58,6 +56,12 @@ module Fusion
 
       if (config[:input_directory])
         directory = File.join(@bundle_options[:project_path],config[:input_directory])
+
+        unless File.exists?(directory)
+          @log.debug "Path #{directory} does not exist"
+          FileUtils.mkpath(directory)
+          @log.debug "Created path: #{directory}"
+        end
 
         file_names = Dir.open(directory).entries.sort.find_all {|filename| filename.end_with?(".js") }
 
@@ -75,7 +79,7 @@ module Fusion
     end
 
     def get_remote_file(url)
-      filename = CGI.escape(url.split("/").last)
+      filename = CGI.escape(url)
       local_directory = File.join(@bundle_options[:project_path], ".remote")
       local_file_path = File.join(local_directory, filename)
       
@@ -127,6 +131,7 @@ module Fusion
 
       options << ["js_output_file", get_output_file(config)]
       options << ["compilation_level", "SIMPLE_OPTIMIZATIONS"]
+      options << ["language_in","ECMASCRIPT5"] # This will be compatible w all newer browsers, and helps us avoid old IE quirks
 
       gather_files(config).each do |input_file|
         options << ["js", input_file]
