@@ -12,9 +12,12 @@ module Fusion
     @options ||= {}
     @options.update(options)
 
-    raise Exception("Configuration error -- must specify #{:bundle_file_path} when configuring Fusion javascript bundler") if @options[:bundle_file_path].nil?
+    if @options[:bundle_file_path].nil? && @options[:bundle_configs].nil?
+      raise Exception("Configuration error -- must specify #{:bundle_file_path} when configuring Fusion javascript bundler")
+    end
 
-    @options[:project_path] = File.join(@options[:bundle_file_path].split("/")[0..-2])
+    @options[:project_path] = File.join(@options[:bundle_file_path].split("/")[0..-2]) if @options[:bundle_file_path]
+    
   end
 
   # So that the bundler can be configured and run in two different places ... like Sass
@@ -26,7 +29,12 @@ module Fusion
       @bundle_options = Fusion.instance_variable_get('@options') 
       @log = @bundle_options[:logger] || Logger.new(STDOUT)
 
-      @bundle_configs = YAML::load(File.open(@bundle_options[:bundle_file_path]))
+      if @bundle_options[:bundle_configs]
+        @bundle_configs = @bundle_options[:bundle_configs]
+      else
+        @bundle_configs = YAML::load(File.open(@bundle_options[:bundle_file_path]))
+      end
+
     end
 
     def run
@@ -75,7 +83,15 @@ module Fusion
 
     def get_output_file(config)
       raise Exception.new("Undefined js bundler output file") if config[:output_file].nil?
-      File.join(@bundle_options[:project_path], config[:output_file])
+      output_file = File.join(@bundle_options[:project_path], config[:output_file])
+      path_directories = output_file.split("/")
+
+      if path_directories.size > 1
+        path = File.join(File.expand_path("."), path_directories[0..-2].join("/"))
+        FileUtils::mkpath(File.join(path,"/"))
+      end
+
+      output_file
     end
 
     def get_remote_file(url)
@@ -149,6 +165,61 @@ module Fusion
       raise Exception.new("Error creating bundle: #{get_output_file(config)}") unless $?.exitstatus == 0
     end
     
+  end
+
+  class DebugOptimized < Optimized
+    def gather_files(config)
+      @log.debug "Warning ... using Debug compiler."
+      input_files = []
+
+      if(config[:input_files])
+        config[:input_files].each do |input_file|
+          @log.debug "Remote file? #{!(input_file =~ URI::regexp).nil?}"
+
+          if (input_file =~ URI::regexp).nil?
+            # Not a URL
+            input_files << File.join(@bundle_options[:project_path], input_file)
+          else
+            # This is a remote file, if we don't have it, get it
+            input_files << get_remote_file(input_file)
+          end          
+        end
+      end
+
+      if (config[:input_directory])
+        directory = File.join(@bundle_options[:project_path],config[:input_directory])
+
+        file_names = Dir.open(directory).entries.sort.find_all {|filename| filename.end_with?(".js") }
+
+        input_files += file_names.collect do |file_name|
+          File.join(directory, file_name)
+        end
+      end
+
+      input_files.uniq!
+
+      # Now wrap each file in a try/catch block and update the input_files list
+
+      FileUtils::mkpath(File.join(@bundle_options[:project_path],".debug"))
+
+      input_files.collect do |input_file|
+        contents = File.open(input_file).read
+        new_input_file =""
+        file_name = input_file.split("/").last
+
+        if input_file.include?(".remote")
+          new_input_file = input_file.gsub(".remote",".debug")
+        else
+          new_input_file = File.join(@bundle_options[:project_path], ".debug", file_name)
+        end
+
+        new_contents = "///////////////////\n//mw_bundle: #{input_file}\n///////////////////\n\n try{\n#{contents}\n}catch(e){\nconsole.log('Error (' + e + 'generated in : #{input_file}');\n}"
+        File.open(new_input_file,"w") {|f| f << new_contents}
+
+        new_input_file
+      end
+
+    end
   end
 
 end
