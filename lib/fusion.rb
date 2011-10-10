@@ -40,11 +40,13 @@ module Fusion
     def run
       start = Time.now
 
-      @bundle_configs.each do |config|
+      bundles = @bundle_configs.collect do |config|
         bundle(config)
       end
 
       @log.debug "Javascript Reloaded #{@bundle_configs.size} bundle(s) (#{Time.now - start}s)"
+
+      bundles
     end
 
     def gather_files(config)
@@ -54,7 +56,13 @@ module Fusion
         config[:input_files].each do |input_file|
           if (input_file =~ URI::regexp).nil?
             # Not a URL
-            input_files << File.join(@bundle_options[:project_path], input_file)
+            file_path = input_file
+
+            unless input_file == File.absolute_path(input_file)
+              file_path = File.join(@bundle_options[:project_path], input_file)
+            end
+
+            input_files << file_path
           else
             # This is a remote file, if we don't have it, get it
             input_files << get_remote_file(input_file)
@@ -126,7 +134,6 @@ module Fusion
 
     def bundle(config)
       js = []
-
       input_files = gather_files(config)      
 
       input_files.each do |input_file|
@@ -136,6 +143,8 @@ module Fusion
       js = js.join("\n")
       
       File.open(get_output_file(config), "w") { |f| f << js }
+
+      js
     end
 
   end
