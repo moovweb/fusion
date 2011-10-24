@@ -37,6 +37,9 @@ module Fusion
   end
 
   class AdvancedOptimized < Fusion::Optimized
+    
+    private
+
     def get_options(config)
       options = super(config)
 
