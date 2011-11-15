@@ -1,6 +1,7 @@
 require 'basic'
 require 'quick'
 require 'optimized'
+require 'pretty'
 
 module Fusion
 
