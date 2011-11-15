@@ -10,15 +10,25 @@ module Fusion
 
   class Basic
 
-    def initialize
-      @bundle_options = Fusion.instance_variable_get('@options') 
-      @log = @bundle_options[:logger] || Logger.new(STDOUT)
+    def initialize(bundle_config=nil, project_path=nil)
+      
+      if bundle_config && project_path
 
-      if @bundle_options[:bundle_configs]
-        @bundle_configs = @bundle_options[:bundle_configs]
+        @bundle_configs = [bundle_config]
+        @bundle_options = { :project_path => project_path }
       else
-        @bundle_configs = YAML::load(File.open(@bundle_options[:bundle_file_path]))
+
+        @bundle_options = Fusion.instance_variable_get('@options')
+
+        if @bundle_options[:bundle_configs]
+          @bundle_configs = @bundle_options[:bundle_configs]
+        else
+          @bundle_configs = YAML::load(File.open(@bundle_options[:bundle_file_path]))
+        end
+
       end
+
+      @log = @bundle_options[:logger] || Logger.new(STDOUT)
 
     end
 
