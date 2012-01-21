@@ -1,0 +1,47 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'yaml'
+require_relative '../lib/fusion'
+
+bundlers = {
+  "quick" => Fusion::Quick,
+  "optimized" => Fusion::Optimized,
+  "advanced_optimized" => Fusion::AdvancedOptimized,
+  "pretty" => Fusion::Pretty
+}
+
+options = {
+  :mode => "quick" 
+}
+
+def usage
+  puts "Usage: fusion -m <mode> <bundle_file>"
+  puts "Modes: #{modes.join('|')} -- default: #{options[:mode]}"  
+  exit(1)
+end
+
+options_parser = OptionParser.new do |x|
+  x.on("-m", "--mode=MODE", "Specify compilation mode") do |value|
+    options[:mode] = value
+  end
+end
+
+options_parser.parse!
+
+puts "Options: #{options}"
+
+usage unless ARGV[0]
+
+bundle = File.absolute_path(ARGV[0])
+path = File.split(bundle)[0..-2].join("/")
+
+bundle_options = YAML.load( File.read(bundle) )
+
+puts "bundle options: #{bundle_options}"
+puts "project path: #{path}"
+
+bundle_options.each do |this_bundle|
+  bundler = bundlers[options[:mode]].new(this_bundle, path)
+  bundler.run
+end
