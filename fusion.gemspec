@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "fusion"
-  s.version = "0.0.9"
+  s.version = "0.0.10"
   s.platform = Gem::Platform::RUBY
 
   s.authors = ["Sean Jezewski"]
@@ -10,6 +10,7 @@ Gem::Specification.new do |s|
   s.summary = "Simple javascript bundler plugin."
   s.description = "Fusion bundles and re-bundles your javascript in two modes - quick (dumb concatenation) and optimized (google closure compiler's SIMPLE_OPTIMIZATIONS level"
 
+  s.executables  = ['fusion']
   s.files = Dir['README.md','lib/*','compiler/*']
   s.require_path = "lib"
   
