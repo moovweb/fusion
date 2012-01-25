@@ -1,6 +1,7 @@
 package fusion
 
 import(
+	"fmt"
 	"path/filepath"
 	"io/ioutil"
 	yaml "launchpad.net/goyaml"
@@ -17,8 +18,8 @@ type bundlerInstance struct{
 	Bundles []BundleConfig
 }
 
-func NewBundlerFromFile(bundlesPath string) (*bundlerInstance) {
-	projectPath, _ := filepath.Split(bundlesPath)
+func getBundles(bundlesPath string) (bundles []BundleConfig, projectPath string) {	
+	projectPath, _ = filepath.Split(bundlesPath)
 
 	data, err := ioutil.ReadFile(bundlesPath)
 	
@@ -26,16 +27,22 @@ func NewBundlerFromFile(bundlesPath string) (*bundlerInstance) {
 		panic("Couldn't read file:" + bundlesPath)
 	}
 	
-	bundles := make([]BundleConfig,0)
+	fmt.Printf("DATA: %v\n", string(data) )
 	
-	err = yaml.Unmarshal(data, &bundles)
+	someBundles := make([]BundleConfig,0)
+	err = yaml.Unmarshal(data, &someBundles)
+	
+	fmt.Printf("bundle: %v\n", bundles)
 	
 	if err != nil {
 		panic("Bad bundle format. Couldn't unmarshal: " + bundlesPath)
 	}
 	
-	return NewBundlerFromBundleConfig(bundles, projectPath)
+	return someBundles, projectPath
 }
+
+/*
+This would be nice w reflection:
 
 func NewBundlerFromBundleConfig(bundles []BundleConfig, projectPath string) (*bundlerInstance) {
 	return &bundlerInstance{
@@ -43,6 +50,7 @@ func NewBundlerFromBundleConfig(bundles []BundleConfig, projectPath string) (*bu
 		ProjectPath: projectPath,
 	}
 }
+*/
 
 type Bundler interface {
 	Run() bool
