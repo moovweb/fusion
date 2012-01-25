@@ -18,16 +18,15 @@ import(
 
 type QuickBundlerInstance struct{
 	bundlerInstance
-	client *http.Client
 }
 
 func NewQuickBundler(bundlesPath string) (*QuickBundlerInstance) {
-//	bundles, projectPath := getBundles(bundlesPath)
+	bundles, projectPath := getBundles(bundlesPath)
 	getBundles(bundlesPath)	
 	
 	b := &QuickBundlerInstance{}
-//	b.Bundles = bundles
-//	b.ProjectPath = projectPath
+	b.Bundles = bundles
+	b.ProjectPath = projectPath
 
 	return b
 }
@@ -54,6 +53,7 @@ func (qb *QuickBundlerInstance) Run() {
 		}
 		
 		outputFile := qb.getOutputFile(&config)		
+		
 		err := ioutil.WriteFile(outputFile, []uint8(data), uint32(0777) )
 		
 		if err != nil {
@@ -99,28 +99,39 @@ func (qb *QuickBundlerInstance) gatherFiles(config *BundleConfig) (filenames []s
 }
 
 func (qb *QuickBundlerInstance) getRemoteFile(url string) (path string) {
-	if qb.client == nil {
-		// Initialize http client
-		qb.client = &http.Client{}
-	}
-	
-	response, err := qb.client.Get(url)
-	
-	if err != nil || response.Status != "200" {
-		panic("Error fetching file:" + url + ":" + err.String() )
-	}
-	
-	var data []byte
 
-	_, err = response.Body.Read(data)
+	filename := strings.Replace(url, "/", "_", -1)
+	filename = strings.Replace(filename, ":", "", -1)
+
+	remoteDirectory := filepath.Join(qb.ProjectPath, ".remote")
+	path = filepath.Join(remoteDirectory, filename)
+		
+	_, err := os.Stat(path)
 	
+	if err == nil {
+		return path
+	}
+	
+	response, err := http.Get(url)	
+	defer response.Body.Close()
+	
+	if err != nil {
+		errorMessage := err.String()
+
+		if response.Status != "200" {
+			errorMessage += ":: Status code:" + response.Status + "\n"
+		}
+			
+		panic("Error fetching file:" + url + ":" + errorMessage )
+	}
+
+	data, err := ioutil.ReadAll(response.Body);
+
 	if err != nil {
 		println("Error reading response")
 		panic(err)
 	}
-	
-	remoteDirectory := filepath.Join(qb.ProjectPath, ".remote")
-	
+		
 	_, err = os.Stat(remoteDirectory)
 	
 	if err != nil {
@@ -131,10 +142,6 @@ func (qb *QuickBundlerInstance) getRemoteFile(url string) (path string) {
 			panic(err)
 		}
 	}
-	
-	filename := strings.Replace(url, "/", "_", -1)
-	filename = strings.Replace(filename, ":", "", -1)
-	path = filepath.Join(remoteDirectory, filename)
 
 	ioutil.WriteFile(path, data, uint32(0777) )
 
