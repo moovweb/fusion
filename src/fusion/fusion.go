@@ -14,19 +14,12 @@ type BundleConfig struct {
 }
 */
 
-type BundleConfig struct {
-	Output_file string
-	Input_directory string
-	Input_files []string
-}
-
-
 type bundlerInstance struct{
 	ProjectPath string
 	Bundles []interface{}
 }
 
-func GetBundles(bundlesPath string) (bundles []interface{}, projectPath string) {	
+func getBundles(bundlesPath string) (bundles []interface{}, projectPath string) {	
 	projectPath, _ = filepath.Split(bundlesPath)
 
 	data, err := ioutil.ReadFile(bundlesPath)
@@ -36,26 +29,6 @@ func GetBundles(bundlesPath string) (bundles []interface{}, projectPath string) 
 	}
 	
 	someBundles := make([]interface{},0)
-	err = yaml.Unmarshal(data, &someBundles)
-		
-	if err != nil {
-		panic("Bad bundle format. Couldn't unmarshal: " + bundlesPath)
-	}
-	
-	return someBundles, projectPath
-}
-
-
-func getBundles(bundlesPath string) (bundles []BundleConfig, projectPath string) {	
-	projectPath, _ = filepath.Split(bundlesPath)
-
-	data, err := ioutil.ReadFile(bundlesPath)
-	
-	if err != nil {
-		panic("Couldn't read file:" + bundlesPath)
-	}
-	
-	someBundles := make([]BundleConfig,0)
 	err = yaml.Unmarshal(data, &someBundles)
 		
 	if err != nil {
