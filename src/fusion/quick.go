@@ -4,6 +4,9 @@ import(
 	"url"
 	"io/ioutil"
 	"path/filepath"
+	"http"
+	"strings"
+	"os"
 )
 
 /* Quick Bundler Instance */
@@ -13,10 +16,11 @@ import(
  *     - move base functions into a base class and promote the the base interface
  */
 
-
 type QuickBundlerInstance struct{
-	Bundles []BundleConfig
+	bundlerInstance
+	client *http.Client
 }
+
 
 func (qb *QuickBundlerInstance) Run() {
 
@@ -84,8 +88,47 @@ func (qb *QuickBundlerInstance) gatherFiles(config *BundleConfig) (filenames []s
 	return filenames
 }
 
-func (qb *QuickBundlerInstance) getRemoteFile(url string) (filepath string) {
-	return "heyo"
+func (qb *QuickBundlerInstance) getRemoteFile(url string) (path string) {
+	if qb.client == nil {
+		// Initialize http client
+		qb.client = &http.Client{}
+	}
+	
+	response, err := qb.client.Get(url)
+	
+	if err != nil || response.Status != "200" {
+		panic("Error fetching file:" + url + ":" + err.String() )
+	}
+	
+	var data []byte
+
+	_, err = response.Body.Read(data)
+	
+	if err != nil {
+		println("Error reading response")
+		panic(err)
+	}
+	
+	remoteDirectory := filepath.Join(qb.ProjectPath, ".remote")
+	
+	_, err = os.Stat(remoteDirectory)
+	
+	if err != nil {
+		err = os.Mkdir(remoteDirectory, uint32(0777) )
+
+		if err != nil {
+			println("Couldn't create directory:" + remoteDirectory)
+			panic(err)
+		}
+	}
+	
+	filename := strings.Replace(url, "/", "_", -1)
+	filename = strings.Replace(filename, ":", "", -1)
+	path = filepath.Join(remoteDirectory, filename)
+
+	ioutil.WriteFile(path, data, uint32(0777) )
+
+	return path
 }
 
 func (qb *QuickBundlerInstance) getOutputFile(config *BundleConfig) (filepath string) {
@@ -93,8 +136,7 @@ func (qb *QuickBundlerInstance) getOutputFile(config *BundleConfig) (filepath st
 		panic("Bundle missing output file.")
 	}
 	
-	
-	return "hey"
+	return filepath.Join(qb.ProjectPath, config.OutputFile)
 }
 
 /* Helper Functions */

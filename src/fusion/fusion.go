@@ -13,7 +13,7 @@ type BundleConfig struct {
 }
 
 type bundlerInstance struct{
-	projectPath string
+	ProjectPath string
 	Bundles []BundleConfig
 }
 
@@ -40,6 +40,7 @@ func NewBundlerFromFile(bundlesPath string) (*bundlerInstance) {
 func NewBundlerFromBundleConfig(bundles []BundleConfig, projectPath string) (*bundlerInstance) {
 	return &bundlerInstance{
 		Bundles: bundles,
+		ProjectPath: projectPath,
 	}
 }
 
