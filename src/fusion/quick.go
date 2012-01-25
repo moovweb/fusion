@@ -21,6 +21,15 @@ type QuickBundlerInstance struct{
 	client *http.Client
 }
 
+func NewQuickBundler(bundlesPath string) (*QuickBundlerInstance) {
+	bundles, projectPath := getBundles(bundlesPath)
+	
+	b := &QuickBundlerInstance{}
+	b.Bundles = bundles
+	b.ProjectPath = projectPath
+
+	return b
+}
 
 func (qb *QuickBundlerInstance) Run() {
 
@@ -131,7 +140,7 @@ func (qb *QuickBundlerInstance) getRemoteFile(url string) (path string) {
 	return path
 }
 
-func (qb *QuickBundlerInstance) getOutputFile(config *BundleConfig) (filepath string) {
+func (qb *QuickBundlerInstance) getOutputFile(config *BundleConfig) (path string) {
 	if len(config.OutputFile) == 0 {
 		panic("Bundle missing output file.")
 	}
