@@ -21,8 +21,7 @@ type QuickBundlerInstance struct{
 }
 
 func NewQuickBundler(bundlesPath string) (*QuickBundlerInstance) {
-	bundles, projectPath := GetBundles(bundlesPath)
-	//GetBundles(bundlesPath)	
+	bundles, projectPath := getBundles(bundlesPath)
 	
 	b := &QuickBundlerInstance{}
 	b.Bundles = bundles
@@ -41,10 +40,7 @@ func (qb *QuickBundlerInstance) Run() {
 		inputFiles = qb.gatherFiles(config)
 		data = ""
 		
-		println("\n\n\n Now bundling")
-		
 		for _, inputFile := range(inputFiles) {
-			println("Loading file:", inputFile)
 			
 			rawJS, err := ioutil.ReadFile(inputFile)
 			
@@ -184,37 +180,25 @@ func (qb *QuickBundlerInstance) getOutputFile(rawConfig interface{}) (path strin
 
 func isURL(path string) (bool) {
 	thisURL, err := url.Parse(path)
-
-	println("url?:", thisURL.String())
 	
 	if err != nil {		
-		println("Not a url")
 		return false
 	}
 	
-	println("Is a url")	
 	realURL := false
 
 	for _, prefix := range( [4]string{"//","http://","https://","ftp://"} ) {
-			forRealsies := strings.HasPrefix(thisURL.String(), prefix)
-			if forRealsies {
+			valid := strings.HasPrefix(thisURL.String(), prefix)
+			if valid {
 				realURL = true
 			}
 	}
-	
-	println("really?", realURL)
 	
 	return realURL
 }
 
 func (qb *QuickBundlerInstance) Absolutize(path string) (string) {
-//	absolutePath, err := filepath.Abs(path)
 	absolutePath := filepath.Join(qb.ProjectPath, path)
-	
-/*	if err != nil {
-		panic("Cannot get absolute filepath for file:" + path)
-	}*/
-	
-	println("path:", path, "absolute path:", absolutePath)	
+		
 	return absolutePath
 }
