@@ -22,11 +22,12 @@ type QuickBundlerInstance struct{
 }
 
 func NewQuickBundler(bundlesPath string) (*QuickBundlerInstance) {
-	bundles, projectPath := getBundles(bundlesPath)
+//	bundles, projectPath := getBundles(bundlesPath)
+	getBundles(bundlesPath)	
 	
 	b := &QuickBundlerInstance{}
-	b.Bundles = bundles
-	b.ProjectPath = projectPath
+//	b.Bundles = bundles
+//	b.ProjectPath = projectPath
 
 	return b
 }
@@ -69,7 +70,7 @@ func (qb *QuickBundlerInstance) Run() {
 
 func (qb *QuickBundlerInstance) gatherFiles(config *BundleConfig) (filenames []string) {
 	
-	for _, inputFile := range(config.InputFiles) {
+	for _, inputFile := range(config.Input_files) {
 		if isURL(inputFile) {
 			filenames = append(filenames, qb.getRemoteFile(inputFile) )
 						
@@ -80,12 +81,12 @@ func (qb *QuickBundlerInstance) gatherFiles(config *BundleConfig) (filenames []s
 		}			
 	}
 	
-	if len(config.InputDirectory) != 0 {
+	if len(config.Input_directory) != 0 {
 
-		entries, err := ioutil.ReadDir(config.InputDirectory)
+		entries, err := ioutil.ReadDir(config.Input_directory)
 
 		if err != nil {
-			panic("Cannot read input directory:" + config.InputDirectory)
+			panic("Cannot read input directory:" + config.Input_directory)
 		}
 		
 		for _, entry := range(entries) {
@@ -141,11 +142,11 @@ func (qb *QuickBundlerInstance) getRemoteFile(url string) (path string) {
 }
 
 func (qb *QuickBundlerInstance) getOutputFile(config *BundleConfig) (path string) {
-	if len(config.OutputFile) == 0 {
+	if len(config.Output_file) == 0 {
 		panic("Bundle missing output file.")
 	}
 	
-	return filepath.Join(qb.ProjectPath, config.OutputFile)
+	return filepath.Join(qb.ProjectPath, config.Output_file)
 }
 
 /* Helper Functions */
