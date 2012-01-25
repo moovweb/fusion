@@ -1,7 +1,7 @@
 package fusion
 
 import(
-	"fmt"
+	"path/filepath"
 	"io/ioutil"
 	yaml "launchpad.net/goyaml"
 )
@@ -26,8 +26,8 @@ type bundlerInstance struct{
 	Bundles []BundleConfig
 }
 
-func getBundles(bundlesPath string) { //}(bundles []BundleConfig, projectPath string) {	
-//	projectPath, _ := filepath.Split(bundlesPath)
+func getBundles(bundlesPath string) (bundles []BundleConfig, projectPath string) {	
+	projectPath, _ = filepath.Split(bundlesPath)
 
 	data, err := ioutil.ReadFile(bundlesPath)
 	
@@ -35,19 +35,14 @@ func getBundles(bundlesPath string) { //}(bundles []BundleConfig, projectPath st
 		panic("Couldn't read file:" + bundlesPath)
 	}
 	
-	fmt.Printf("DATA: %v\n", string(data) )
-	
-	//someBundles := make([]interface{},0)
 	someBundles := make([]BundleConfig,0)
 	err = yaml.Unmarshal(data, &someBundles)
-	
-	fmt.Printf("bundle: %v\n, length: %v", someBundles, len(someBundles))
-	
+		
 	if err != nil {
 		panic("Bad bundle format. Couldn't unmarshal: " + bundlesPath)
 	}
 	
-//	return someBundles, projectPath
+	return someBundles, projectPath
 }
 
 /*
