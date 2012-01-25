@@ -21,8 +21,8 @@ type QuickBundlerInstance struct{
 }
 
 func NewQuickBundler(bundlesPath string) (*QuickBundlerInstance) {
-	bundles, projectPath := getBundles(bundlesPath)
-	getBundles(bundlesPath)	
+	bundles, projectPath := GetBundles(bundlesPath)
+	//GetBundles(bundlesPath)	
 	
 	b := &QuickBundlerInstance{}
 	b.Bundles = bundles
@@ -38,10 +38,14 @@ func (qb *QuickBundlerInstance) Run() {
 	
 	for _, config := range(qb.Bundles) {
 		
-		inputFiles = qb.gatherFiles(&config)
+		inputFiles = qb.gatherFiles(config)
 		data = ""
 		
+		println("\n\n\n Now bundling")
+		
 		for _, inputFile := range(inputFiles) {
+			println("Loading file:", inputFile)
+			
 			rawJS, err := ioutil.ReadFile(inputFile)
 			
 			if err != nil {
@@ -52,7 +56,7 @@ func (qb *QuickBundlerInstance) Run() {
 			
 		}
 		
-		outputFile := qb.getOutputFile(&config)		
+		outputFile := qb.getOutputFile(config)		
 		
 		err := ioutil.WriteFile(outputFile, []uint8(data), uint32(0777) )
 		
@@ -68,29 +72,46 @@ func (qb *QuickBundlerInstance) Run() {
 
 /****** TODO(SJ): Put these in a base struct and inherit these methods ******/
 
-func (qb *QuickBundlerInstance) gatherFiles(config *BundleConfig) (filenames []string) {
+func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []string) {
+//	config := rawConfig.(map[string]interface{})	
+	config := rawConfig.(map[interface{}]interface{})	
 	
-	for _, inputFile := range(config.Input_files) {
+	var files []interface{}
+	
+	if config[":input_files"] != nil {
+		files = config[":input_files"].([]interface{})
+	}
+	
+	for _, rawInputFile := range(files) {
+		inputFile := rawInputFile.(string)
+
+
 		if isURL(inputFile) {
 			filenames = append(filenames, qb.getRemoteFile(inputFile) )
 						
 		} else {
-			absolutePath := absolutize(inputFile)
-			
+			absolutePath := qb.Absolutize(inputFile)
+
 			filenames = append(filenames, absolutePath)
 		}			
 	}
 	
-	if len(config.Input_directory) != 0 {
+	var inputDirectory string
+	
+	if config[":input_directory"] != nil {
+		inputDirectory = config[":input_directory"].(string)
+	}
+	
+	if len(inputDirectory) != 0 {
 
-		entries, err := ioutil.ReadDir(config.Input_directory)
+		entries, err := ioutil.ReadDir(inputDirectory)
 
 		if err != nil {
-			panic("Cannot read input directory:" + config.Input_directory)
+			panic("Cannot read input directory:" + inputDirectory)
 		}
 		
 		for _, entry := range(entries) {
-			filenames = append(filenames, absolutize(entry.Name) )
+			filenames = append(filenames, qb.Absolutize(entry.Name) )
 		}
 		
 	}	
@@ -113,17 +134,16 @@ func (qb *QuickBundlerInstance) getRemoteFile(url string) (path string) {
 	}
 	
 	response, err := http.Get(url)	
-	defer response.Body.Close()
 	
 	if err != nil {
-		errorMessage := err.String()
-
-		if response.Status != "200" {
-			errorMessage += ":: Status code:" + response.Status + "\n"
-		}
-			
-		panic("Error fetching file:" + url + ":" + errorMessage )
+		panic("Error fetching file:" + url + ":" + err.String() )
 	}
+	
+	if response.Status != "200 OK" {
+		panic("Error fetching file:" + url + ":: Status Code : " + response.Status )
+	}
+	
+	defer response.Body.Close()
 
 	data, err := ioutil.ReadAll(response.Body);
 
@@ -148,32 +168,53 @@ func (qb *QuickBundlerInstance) getRemoteFile(url string) (path string) {
 	return path
 }
 
-func (qb *QuickBundlerInstance) getOutputFile(config *BundleConfig) (path string) {
-	if len(config.Output_file) == 0 {
+func (qb *QuickBundlerInstance) getOutputFile(rawConfig interface{}) (path string) {
+	config := rawConfig.(map[interface{}]interface{})
+
+	outputFile := config[":output_file"].(string)
+
+	if len(outputFile) == 0 {
 		panic("Bundle missing output file.")
 	}
 	
-	return filepath.Join(qb.ProjectPath, config.Output_file)
+	return filepath.Join(qb.ProjectPath, outputFile)
 }
 
 /* Helper Functions */
 
 func isURL(path string) (bool) {
-	_, err := url.Parse(path)
+	thisURL, err := url.Parse(path)
+
+	println("url?:", thisURL.String())
 	
-	if err != nil {
+	if err != nil {		
+		println("Not a url")
 		return false
 	}
 	
-	return true
-}
+	println("Is a url")	
+	realURL := false
 
-func absolutize(path string) (string) {
-	absolutePath, err := filepath.Abs(path)
-	
-	if err != nil {
-		panic("Cannot get absolute filepath for file:" + path)
+	for _, prefix := range( [4]string{"//","http://","https://","ftp://"} ) {
+			forRealsies := strings.HasPrefix(thisURL.String(), prefix)
+			if forRealsies {
+				realURL = true
+			}
 	}
 	
+	println("really?", realURL)
+	
+	return realURL
+}
+
+func (qb *QuickBundlerInstance) Absolutize(path string) (string) {
+//	absolutePath, err := filepath.Abs(path)
+	absolutePath := filepath.Join(qb.ProjectPath, path)
+	
+/*	if err != nil {
+		panic("Cannot get absolute filepath for file:" + path)
+	}*/
+	
+	println("path:", path, "absolute path:", absolutePath)	
 	return absolutePath
 }

@@ -23,8 +23,28 @@ type BundleConfig struct {
 
 type bundlerInstance struct{
 	ProjectPath string
-	Bundles []BundleConfig
+	Bundles []interface{}
 }
+
+func GetBundles(bundlesPath string) (bundles []interface{}, projectPath string) {	
+	projectPath, _ = filepath.Split(bundlesPath)
+
+	data, err := ioutil.ReadFile(bundlesPath)
+	
+	if err != nil {
+		panic("Couldn't read file:" + bundlesPath)
+	}
+	
+	someBundles := make([]interface{},0)
+	err = yaml.Unmarshal(data, &someBundles)
+		
+	if err != nil {
+		panic("Bad bundle format. Couldn't unmarshal: " + bundlesPath)
+	}
+	
+	return someBundles, projectPath
+}
+
 
 func getBundles(bundlesPath string) (bundles []BundleConfig, projectPath string) {	
 	projectPath, _ = filepath.Split(bundlesPath)
