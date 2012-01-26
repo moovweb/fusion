@@ -99,15 +99,16 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 	}
 	
 	if len(inputDirectory) != 0 {
+		absoluteDirectoryPath := qb.Absolutize(inputDirectory)
 
-		entries, err := ioutil.ReadDir(inputDirectory)
+		entries, err := ioutil.ReadDir( absoluteDirectoryPath )
 
 		if err != nil {
-			panic("Cannot read input directory:" + inputDirectory)
+			panic("Cannot read input directory:" + absoluteDirectoryPath)
 		}
 		
 		for _, entry := range(entries) {
-			filenames = append(filenames, qb.Absolutize(entry.Name) )
+			filenames = append(filenames, filepath.Join(absoluteDirectoryPath, entry.Name) )
 		}
 		
 	}	
