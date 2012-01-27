@@ -20,14 +20,18 @@ type QuickBundlerInstance struct{
 	bundlerInstance
 }
 
-func NewQuickBundler(bundlesPath string) (*QuickBundlerInstance) {
-	bundles, projectPath := getBundles(bundlesPath)
-	
+func NewQuickBundler(bundlesPath string) (*QuickBundlerInstance, *os.Error) {
+	bundles, projectPath, err := getBundles(bundlesPath)
+
+	if err != nil {
+		return nil, err
+	}
+
 	b := &QuickBundlerInstance{}
 	b.Bundles = bundles
-	b.ProjectPath = projectPath
+	b.ProjectPath = *projectPath
 
-	return b
+	return b, nil
 }
 
 func (qb *QuickBundlerInstance) Run() {

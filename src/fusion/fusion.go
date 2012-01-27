@@ -4,28 +4,22 @@ import(
 	"path/filepath"
 	"io/ioutil"
 	yaml "launchpad.net/goyaml"
+	"os"
 )
-
-/* -- LAME : go-yaml doesn't change the names to camel case
-type BundleConfig struct {
-	OutputFile string
-	InputDirectory string
-	InputFiles []string
-}
-*/
 
 type bundlerInstance struct{
 	ProjectPath string
 	Bundles []interface{}
 }
 
-func getBundles(bundlesPath string) (bundles []interface{}, projectPath string) {	
-	projectPath, _ = filepath.Split(bundlesPath)
+func getBundles(bundlesPath string) (bundles []interface{}, projectPath *string, thisError *os.Error) {	
 
+	path, _ := filepath.Split(bundlesPath)
 	data, err := ioutil.ReadFile(bundlesPath)
-	
+
 	if err != nil {
-		panic("Couldn't read file:" + bundlesPath)
+		err = os.NewError("Couldn't read file:" + bundlesPath)
+		return nil, nil, &err
 	}
 	
 	someBundles := make([]interface{},0)
@@ -35,7 +29,7 @@ func getBundles(bundlesPath string) (bundles []interface{}, projectPath string) 
 		panic("Bad bundle format. Couldn't unmarshal: " + bundlesPath)
 	}
 	
-	return someBundles, projectPath
+	return someBundles, &path, nil
 }
 
 /*
