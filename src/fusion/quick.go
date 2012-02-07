@@ -7,6 +7,7 @@ import(
 	"http"
 	"strings"
 	"os"
+	"log4go"
 )
 
 /* Quick Bundler Instance */
@@ -18,9 +19,10 @@ import(
 
 type QuickBundlerInstance struct{
 	bundlerInstance
+	Log log4go.Logger
 }
 
-func NewQuickBundler(bundlesPath string) (*QuickBundlerInstance, *os.Error) {
+func NewQuickBundler(bundlesPath string, logger log4go.Logger) (*QuickBundlerInstance, *os.Error) {
 	bundles, projectPath, err := getBundles(bundlesPath)
 
 	if err != nil {
@@ -30,18 +32,26 @@ func NewQuickBundler(bundlesPath string) (*QuickBundlerInstance, *os.Error) {
 	b := &QuickBundlerInstance{}
 	b.Bundles = bundles
 	b.ProjectPath = *projectPath
+	b.Log = logger
 
 	return b, nil
 }
 
-func (qb *QuickBundlerInstance) Run() {
+func (qb *QuickBundlerInstance) Run() ([]os.Error) {
 
-	var inputFiles []string
 	var data string
 	
+	errors := make([]os.Error,0)
+
 	for _, config := range(qb.Bundles) {
 		
-		inputFiles = qb.gatherFiles(config)
+		inputFiles, err := qb.gatherFiles(config)
+		
+		if err != nil {
+			qb.Log.Info("Couldn't create bundle: %v", err)
+			errors = append( errors, err)
+		}
+
 		data = ""
 		
 		for _, inputFile := range(inputFiles) {
@@ -58,22 +68,24 @@ func (qb *QuickBundlerInstance) Run() {
 		
 		outputFile := qb.getOutputFile(config)		
 		
-		err := ioutil.WriteFile(outputFile, []uint8(data), uint32(0777) )
+		err = ioutil.WriteFile(outputFile, []uint8(data), uint32(0777) )
 		
 		if err != nil {
-			panic("Couldn't write file:" + outputFile)
+			qb.Log.Info("Couldn't write output js (%v): %v", outputFile, err)
+			errors = append( errors, err )
 		}
 		
 		
 	}
 	
+	return errors
 }
 
 
 /****** TODO(SJ): Put these in a base struct and inherit these methods ******/
 
-func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []string) {
-//	config := rawConfig.(map[string]interface{})	
+func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []string, error os.Error) {
+
 	config := rawConfig.(map[interface{}]interface{})	
 	
 	var files []interface{}
@@ -108,7 +120,7 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 		entries, err := ioutil.ReadDir( absoluteDirectoryPath )
 
 		if err != nil {
-			panic("Cannot read input directory:" + absoluteDirectoryPath)
+			return nil, os.NewError("Cannot read input directory:" + absoluteDirectoryPath)
 		}
 		
 		for _, entry := range(entries) {
@@ -117,7 +129,7 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 		
 	}	
 	
-	return filenames
+	return filenames, nil
 }
 
 func (qb *QuickBundlerInstance) getRemoteFile(url string) (path string) {
