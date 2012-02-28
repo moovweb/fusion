@@ -3,7 +3,7 @@ package fusion
 import(
 	"path/filepath"
 	"io/ioutil"
-	yaml "launchpad.net/goyaml"
+	yaml "goyaml"
 	"os"
 )
 
