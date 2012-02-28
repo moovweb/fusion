@@ -1,7 +1,7 @@
 package main
 
 import(
-	"fusion"
+	"fusion/src/fusion"
 	"os"
 	"log4go"
 )
