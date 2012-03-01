@@ -124,6 +124,10 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 		}
 		
 		for _, entry := range(entries) {
+			if strings.HasPrefix(entry.Name, ".") {
+				qb.Log.Info("Skipped file " + entry.Name)
+				continue
+			}
 			filenames = append(filenames, filepath.Join(absoluteDirectoryPath, entry.Name) )
 		}
 		
