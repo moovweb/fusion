@@ -1,3 +1,3 @@
 :source git@github.com:moovweb
-pkg goyaml
-pkg log4go
+pkg goyaml debug
+pkg log4go debug
