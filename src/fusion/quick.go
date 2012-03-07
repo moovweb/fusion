@@ -128,6 +128,11 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 				qb.Log.Info("Skipped file " + entry.Name)
 				continue
 			}
+			if !strings.HasSuffix(entry.Name, ".js") {
+				qb.Log.Info("Skipped file " + entry.Name)
+				continue
+			}
+
 			filenames = append(filenames, filepath.Join(absoluteDirectoryPath, entry.Name) )
 		}
 		
