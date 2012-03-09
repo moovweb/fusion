@@ -114,29 +114,33 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 		inputDirectory = config[":input_directory"].(string)
 	}
 	
-	if len(inputDirectory) != 0 {
-		absoluteDirectoryPath := qb.Absolutize(inputDirectory)
+	var entries []*os.FileInfo
+	var absoluteDirectoryPath string
 
-		entries, err := ioutil.ReadDir( absoluteDirectoryPath )
+	if len(inputDirectory) != 0 {
+		absoluteDirectoryPath = qb.Absolutize(inputDirectory)
+
+		newEntries, err := ioutil.ReadDir( absoluteDirectoryPath )
 
 		if err != nil {
-			return nil, os.NewError("Cannot read input directory:" + absoluteDirectoryPath)
+			qb.Log.Warn("Cannot read input directory:" + absoluteDirectoryPath)
+		} else {
+			entries = newEntries	
 		}
-		
-		for _, entry := range(entries) {
-			if strings.HasPrefix(entry.Name, ".") {
-				qb.Log.Info("Skipped file " + entry.Name)
-				continue
-			}
-			if !strings.HasSuffix(entry.Name, ".js") {
-				qb.Log.Info("Skipped file " + entry.Name)
-				continue
-			}
+	}
 
-			filenames = append(filenames, filepath.Join(absoluteDirectoryPath, entry.Name) )
+	for _, entry := range(entries) {
+		if strings.HasPrefix(entry.Name, ".") {
+			qb.Log.Info("Skipped file " + entry.Name)
+			continue
 		}
-		
-	}	
+		if !strings.HasSuffix(entry.Name, ".js") {
+			qb.Log.Info("Skipped file " + entry.Name)
+			continue
+		}
+
+		filenames = append(filenames, filepath.Join(absoluteDirectoryPath, entry.Name) )
+	}
 	
 	return filenames, nil
 }
