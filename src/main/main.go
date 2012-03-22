@@ -11,9 +11,8 @@ func main() {
 	bundler, err := fusion.NewQuickBundler(os.Args[1], make(log4go.Logger))		
 
 	if err != nil {
-		println("Error:", (*err).String() )
+		println("Error:", err.String() )
 	} else {
 		bundler.Run()
 	}
-	
 }

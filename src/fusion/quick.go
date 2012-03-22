@@ -22,7 +22,7 @@ type QuickBundlerInstance struct{
 	Log log4go.Logger
 }
 
-func NewQuickBundler(bundlesPath string, logger log4go.Logger) (*QuickBundlerInstance, *os.Error) {
+func NewQuickBundler(bundlesPath string, logger log4go.Logger) (*QuickBundlerInstance, os.Error) {
 	bundles, projectPath, err := getBundles(bundlesPath)
 
 	if err != nil {

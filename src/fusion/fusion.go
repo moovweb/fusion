@@ -12,19 +12,15 @@ type bundlerInstance struct{
 	Bundles []interface{}
 }
 
-func getBundles(bundlesPath string) (bundles []interface{}, projectPath *string, thisError *os.Error) {	
-
+func getBundles(bundlesPath string) (bundles []interface{}, projectPath *string, err os.Error) {	
 	path, _ := filepath.Split(bundlesPath)
 	data, err := ioutil.ReadFile(bundlesPath)
-
 	if err != nil {
-		err = os.NewError("Couldn't read file:" + bundlesPath)
-		return nil, nil, &err
+		return nil, nil, err
 	}
 	
 	someBundles := make([]interface{},0)
 	err = yaml.Unmarshal(data, &someBundles)
-		
 	if err != nil {
 		panic("Bad bundle format. Couldn't unmarshal: " + bundlesPath)
 	}
