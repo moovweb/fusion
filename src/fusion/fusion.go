@@ -1,30 +1,29 @@
 package fusion
 
-import(
-	"path/filepath"
-	"io/ioutil"
+import (
 	yaml "goyaml"
-	"os"
+	"io/ioutil"
+	"path/filepath"
 )
 
-type bundlerInstance struct{
+type bundlerInstance struct {
 	ProjectPath string
-	Bundles []interface{}
+	Bundles     []interface{}
 }
 
-func getBundles(bundlesPath string) (bundles []interface{}, projectPath *string, err os.Error) {	
+func getBundles(bundlesPath string) (bundles []interface{}, projectPath *string, err error) {
 	path, _ := filepath.Split(bundlesPath)
 	data, err := ioutil.ReadFile(bundlesPath)
 	if err != nil {
 		return nil, nil, err
 	}
-	
-	someBundles := make([]interface{},0)
+
+	someBundles := make([]interface{}, 0)
 	err = yaml.Unmarshal(data, &someBundles)
 	if err != nil {
 		panic("Bad bundle format. Couldn't unmarshal: " + bundlesPath)
 	}
-	
+
 	return someBundles, &path, nil
 }
 
