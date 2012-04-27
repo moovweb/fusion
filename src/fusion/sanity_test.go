@@ -2,30 +2,22 @@ package fusion
 
 
 import(
-  "io/ioutil"
   "testing"
 )
 
 func TestYAMLLoading(t *testing.T) {
-  rawBundles, _, _ := getBundles("test/example-bundle.yml")
-	bundles := rawBundles.(map[interface{}]interface{})
-
-	var files []interface{}
-
-	if bundles[":input_files"] != nil {
-		files = bundles[":input_files"].([]interface{})
+	bundles, _, _ := getBundles("test/example-bundle.yml")
+	if len(bundles) != 1 {
+		t.Errorf("there should be one bundle entry\n")
 	}
-	
-	if len(files) != 1 {
-	  t.FailNow("Input files array is empty!")
+	b := bundles[0].(map[interface{}]interface{})
+	input_files := b[":input_files"].([]interface{})
+	if len(input_files) != 1 {
+		t.Errorf("there should be 1 input file\n")
 	}
-
-  inputFile := files[0].(string)
-	expected := "http://d1topzp4nao5hp.cloudfront.net/uranium-upload/0.1.23/uranium.js"
-	
-  if inputFile != expected {
-    t.FailNow("Invalid input file. Got (" + inputFile + "), expected (" + expected + ")")
-  }
-	
+	name := input_files[0].(string)
+	if name != "http://d1topzp4nao5hp.cloudfront.net/uranium-upload/0.1.23/uranium.js" {
+		t.Errorf("the input file name does not match\n")
+	}
 }
 
