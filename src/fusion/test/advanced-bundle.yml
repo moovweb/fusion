@@ -1,0 +1,5 @@
+--- 
+- :output_file: main.js
+  :input_directory: main
+  :input_files:
+  - foo.js

@@ -82,7 +82,7 @@ func (qb *QuickBundlerInstance) Run() []error {
 
 /****** TODO(SJ): Put these in a base struct and inherit these methods ******/
 
-func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []string, error error) {
+func (qb *QuickBundlerInstance) GatherFiles(rawConfig interface{}) (filenames []string, error error) {
 
 	config := rawConfig.(map[interface{}]interface{})
 
@@ -136,10 +136,22 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 			continue
 		}
 
-		filenames = append(filenames, filepath.Join(absoluteDirectoryPath, entry.Name()))
+    absolutePath := filepath.Join(absoluteDirectoryPath, entry.Name())
+    if alreadyLoaded(filenames, absolutePath) {
+		  filenames = append(filenames, absolutePath)
+	  }
 	}
 
 	return filenames, nil
+}
+
+func alreadyLoaded(files []string, filename string) bool {
+  for _, file := range(files) {
+    if file == filename {
+      return true
+    }
+  }
+  return false
 }
 
 func (qb *QuickBundlerInstance) getRemoteFile(url string) (path string) {

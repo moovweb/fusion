@@ -21,3 +21,19 @@ func TestYAMLLoading(t *testing.T) {
 	}
 }
 
+func TestFileUniqueness(t *testing.T) {
+	bundles, _, err := getBundles("test/advanced-bundle.yml")
+  if err != nil {
+    t.Error(err)    
+  }
+  
+  if len(bundles) < 1 {
+    t.Fatalf("Didn't load any bundles")
+  }
+
+	if len(files) != 1 {
+		t.Fatalf("there should be 1 input file: %d\n", len(files))
+	}
+	
+}
+
