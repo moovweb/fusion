@@ -1,0 +1,5 @@
+--- 
+- :output_file: main.js
+  :input_directory: main
+  :input_files:
+  - http://d1topzp4nao5hp.cloudfront.net/uranium-upload/0.1.23/uranium.js
