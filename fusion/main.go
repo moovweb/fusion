@@ -1,17 +1,19 @@
 package main
 
-import(
+import (
 	"fusion"
+	"golog"
 	"os"
-	"log4go"
 )
 
 func main() {
-		
-	bundler, err := fusion.NewQuickBundler(os.Args[1], make(log4go.Logger))		
+	logger := golog.NewLogger("fusion")
+	consoleProcessor := golog.NewConsoleProcessor(golog.LOG_INFO)
+	logger.AddProcessor("console", consoleProcessor)
+	bundler, err := fusion.NewQuickBundler(os.Args[1], logger)
 
 	if err != nil {
-		println("Error:", err.Error() )
+		println("Error:", err.Error())
 	} else {
 		bundler.Run()
 	}

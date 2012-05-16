@@ -1,8 +1,8 @@
 package fusion
 
 import (
+	"golog"
 	"io/ioutil"
-	"log4go"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,10 +19,10 @@ import (
 
 type QuickBundlerInstance struct {
 	bundlerInstance
-	Log log4go.Logger
+	Log *golog.Logger
 }
 
-func NewQuickBundler(bundlesPath string, logger log4go.Logger) (*QuickBundlerInstance, error) {
+func NewQuickBundler(bundlesPath string, logger *golog.Logger) (*QuickBundlerInstance, error) {
 	bundles, projectPath, err := getBundles(bundlesPath)
 
 	if err != nil {
@@ -120,7 +120,7 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 		newEntries, err := ioutil.ReadDir(absoluteDirectoryPath)
 
 		if err != nil {
-			qb.Log.Warn("Cannot read input directory:" + absoluteDirectoryPath)
+			qb.Log.Warning("Cannot read input directory:" + absoluteDirectoryPath)
 		} else {
 			entries = newEntries
 		}
