@@ -8,7 +8,7 @@ import (
 
 func main() {
 	logger := golog.NewLogger("fusion")
-	consoleProcessor := golog.NewConsoleProcessor(golog.LOG_INFO)
+	consoleProcessor := golog.NewConsoleProcessor(golog.LOG_INFO, true)
 	logger.AddProcessor("console", consoleProcessor)
 	bundler, err := fusion.NewQuickBundler(os.Args[1], logger)
 
