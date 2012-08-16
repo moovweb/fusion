@@ -1,6 +1,7 @@
 package fusion
 
 import (
+	"errors"
 	"golog"
 	"io/ioutil"
 	"net/http"
@@ -83,7 +84,6 @@ func (qb *QuickBundlerInstance) Run() []error {
 /****** TODO(SJ): Put these in a base struct and inherit these methods ******/
 
 func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []string, error error) {
-
 	config := rawConfig.(map[interface{}]interface{})
 
 	var files []interface{}
@@ -96,8 +96,12 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 		inputFile := rawInputFile.(string)
 
 		if isURL(inputFile) {
-			filenames = append(filenames, qb.getRemoteFile(inputFile))
-
+			var path string
+			path, error = qb.getRemoteFile(inputFile)
+			if error != nil {
+				return
+			}
+			filenames = append(filenames, path)
 		} else {
 			absolutePath := qb.Absolutize(inputFile)
 
@@ -142,28 +146,28 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 	return filenames, nil
 }
 
-func (qb *QuickBundlerInstance) getRemoteFile(url string) (path string) {
+func (qb *QuickBundlerInstance) getRemoteFile(url string) (string, error) {
 
 	filename := strings.Replace(url, "/", "_", -1)
 	filename = strings.Replace(filename, ":", "", -1)
 
 	remoteDirectory := filepath.Join(qb.ProjectPath, ".remote")
-	path = filepath.Join(remoteDirectory, filename)
+	path := filepath.Join(remoteDirectory, filename)
 
 	_, err := os.Stat(path)
 
 	if err == nil {
-		return path
+		return path, nil
 	}
 
 	response, err := http.Get(url)
 
 	if err != nil {
-		panic("Error fetching file:" + url + ":" + err.Error())
+		return path, errors.New("Error fetching file: " + url + ":" + err.Error())
 	}
 
 	if response.Status != "200 OK" {
-		panic("Error fetching file:" + url + ":: Status Code : " + response.Status)
+		return path, errors.New("Error fetching file:" + url + ":: Status Code : " + response.Status)
 	}
 
 	defer response.Body.Close()
@@ -171,8 +175,7 @@ func (qb *QuickBundlerInstance) getRemoteFile(url string) (path string) {
 	data, err := ioutil.ReadAll(response.Body)
 
 	if err != nil {
-		println("Error reading response")
-		panic(err)
+		return path, errors.New("Error reading response: " + err.Error())
 	}
 
 	_, err = os.Stat(remoteDirectory)
@@ -181,14 +184,13 @@ func (qb *QuickBundlerInstance) getRemoteFile(url string) (path string) {
 		err = os.Mkdir(remoteDirectory, os.FileMode(0755))
 
 		if err != nil {
-			println("Couldn't create directory:" + remoteDirectory)
-			panic(err)
+			return path, errors.New("Couldn't create directory: " + remoteDirectory + "(" + err.Error() + ")")
 		}
 	}
 
 	ioutil.WriteFile(path, data, os.FileMode(0644))
 
-	return path
+	return path, nil
 }
 
 func (qb *QuickBundlerInstance) getOutputFile(rawConfig interface{}) (path string) {
