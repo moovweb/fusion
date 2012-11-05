@@ -1,8 +1,7 @@
 package fusion
 
-
-import(
-  "testing"
+import (
+	"testing"
 )
 
 func TestYAMLLoading(t *testing.T) {
@@ -20,4 +19,3 @@ func TestYAMLLoading(t *testing.T) {
 		t.Fatalf("the input file name does not match\n")
 	}
 }
-
