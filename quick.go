@@ -38,6 +38,17 @@ func NewQuickBundler(bundlesPath string, logger *golog.Logger) (*QuickBundlerIns
 	return b, nil
 }
 
+func (qb *QuickBundlerInstance) GetConfig(conf string) []interface{} {
+	results := make([]interface{}, 0)
+	for _, rawConfig := range qb.Bundles {
+		config := rawConfig.(map[interface{}]interface{})
+		if config[conf] != nil {
+			results = append(results, config[conf])
+		}
+	}
+	return results
+}
+
 func (qb *QuickBundlerInstance) Run() []error {
 
 	var data string

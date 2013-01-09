@@ -39,5 +39,6 @@ func NewBundlerFromBundleConfig(bundles []BundleConfig, projectPath string) (*bu
 */
 
 type Bundler interface {
-	Run() bool
+	Run() []error
+	GetConfig(config string) []interface{}
 }
