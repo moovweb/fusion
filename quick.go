@@ -74,7 +74,13 @@ func (qb *QuickBundlerInstance) Run() []error {
 				panic("Couldn't open file:" + inputFile)
 			}
 
-			data += "\n" + string(rawJS) + "\n"
+			relativeFilename := strings.Replace(inputFile, qb.ProjectPath, "", -1) // remove everything including $project/assets/javascript/
+			if strings.HasPrefix(relativeFilename, ".remote/") {
+				relativeFilename = strings.Replace(relativeFilename, ".remote/", "", 1) // remove the .remote/ prefix from remote files, since they already show the URL
+				relativeFilename = strings.Replace(relativeFilename, "__colon__", ":", -1)
+				relativeFilename = strings.Replace(relativeFilename, "__slash__", "/", -1)
+			}
+			data += "\n\n/*\n * File: "+relativeFilename+"\n */\n" + string(rawJS) + "\n"
 
 		}
 
@@ -159,8 +165,8 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 
 func (qb *QuickBundlerInstance) getRemoteFile(url string) (string, error) {
 
-	filename := strings.Replace(url, "/", "_", -1)
-	filename = strings.Replace(filename, ":", "", -1)
+	filename := strings.Replace(url, "/", "__slash__", -1)
+	filename = strings.Replace(filename, ":", "__colon__", -1)
 
 	remoteDirectory := filepath.Join(qb.ProjectPath, ".remote")
 	path := filepath.Join(remoteDirectory, filename)
