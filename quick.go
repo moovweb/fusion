@@ -122,7 +122,11 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 		} else {
 			absolutePath := qb.Absolutize(inputFile)
 
-			filenames = append(filenames, absolutePath)
+			if strings.Contains(absolutePath, qb.ProjectPath) {
+				filenames = append(filenames, absolutePath)
+			} else {
+				qb.Log.Warning("'%s' lies outside of the '/assets/javascript' directory; skipped.", inputFile)
+			}
 		}
 	}
 
@@ -138,12 +142,15 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 	if len(inputDirectory) != 0 {
 		absoluteDirectoryPath = qb.Absolutize(inputDirectory)
 
-		newEntries, err := ioutil.ReadDir(absoluteDirectoryPath)
-
-		if err != nil {
-			qb.Log.Warning("Cannot read input directory:" + absoluteDirectoryPath)
+		if !strings.Contains(absoluteDirectoryPath, qb.ProjectPath) {
+			qb.Log.Warning("'%s' lies outside of the '/assets/javascript' directory; skipped.", inputDirectory)
 		} else {
-			entries = newEntries
+			newEntries, err := ioutil.ReadDir(absoluteDirectoryPath)
+			if err != nil {
+				qb.Log.Warning("Cannot read input directory: " + absoluteDirectoryPath)
+			} else {
+				entries = newEntries
+			}
 		}
 	}
 
