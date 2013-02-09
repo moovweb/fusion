@@ -71,7 +71,8 @@ func (qb *QuickBundlerInstance) Run() []error {
 			rawJS, err := ioutil.ReadFile(inputFile)
 
 			if err != nil {
-				panic("Couldn't open file:" + inputFile)
+				errors = append(errors, err)
+				continue
 			}
 
 			relativeFilename := strings.Replace(inputFile, qb.ProjectPath, "", -1) // remove everything including $project/assets/javascript/
@@ -80,7 +81,7 @@ func (qb *QuickBundlerInstance) Run() []error {
 				relativeFilename = strings.Replace(relativeFilename, "__colon__", ":", -1)
 				relativeFilename = strings.Replace(relativeFilename, "__slash__", "/", -1)
 			}
-			data += "\n\n/*\n * File: "+relativeFilename+"\n */\n" + string(rawJS) + "\n"
+			data += "\n\n/*\n * File: " + relativeFilename + "\n */\n" + string(rawJS) + "\n"
 
 		}
 
