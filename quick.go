@@ -60,7 +60,7 @@ func (qb *QuickBundlerInstance) Run() []error {
 		inputFiles, err := qb.gatherFiles(config)
 
 		if err != nil {
-			qb.Log.Info("Couldn't create bundle: %v", err)
+			qb.Log.Infof("Couldn't create bundle: %v", err)
 			errors = append(errors, err)
 		}
 
@@ -90,7 +90,7 @@ func (qb *QuickBundlerInstance) Run() []error {
 		err = ioutil.WriteFile(outputFile, []uint8(data), os.FileMode(0644))
 
 		if err != nil {
-			qb.Log.Info("Couldn't write output js (%v): %v", outputFile, err)
+			qb.Log.Infof("Couldn't write output js (%v): %v", outputFile, err)
 			errors = append(errors, err)
 		}
 
@@ -126,7 +126,7 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 			if strings.Contains(absolutePath, qb.ProjectPath) {
 				filenames = append(filenames, absolutePath)
 			} else {
-				qb.Log.Warning("'%s' lies outside of the '/assets/javascript' directory; skipped.", inputFile)
+				qb.Log.Warningf("'%s' lies outside of the '/assets/javascript' directory; skipped.", inputFile)
 			}
 		}
 	}
@@ -144,11 +144,11 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 		absoluteDirectoryPath = qb.Absolutize(inputDirectory)
 
 		if !strings.Contains(absoluteDirectoryPath, qb.ProjectPath) {
-			qb.Log.Warning("'%s' lies outside of the '/assets/javascript' directory; skipped.", inputDirectory)
+			qb.Log.Warningf("'%s' lies outside of the '/assets/javascript' directory; skipped.", inputDirectory)
 		} else {
 			newEntries, err := ioutil.ReadDir(absoluteDirectoryPath)
 			if err != nil {
-				qb.Log.Warning("Cannot read input directory: " + absoluteDirectoryPath)
+				qb.Log.Warningf("Cannot read input directory: " + absoluteDirectoryPath)
 			} else {
 				entries = newEntries
 			}
@@ -157,11 +157,11 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 
 	for _, entry := range entries {
 		if strings.HasPrefix(entry.Name(), ".") {
-			qb.Log.Info("Skipped file " + entry.Name())
+			qb.Log.Infof("Skipped file " + entry.Name())
 			continue
 		}
 		if !strings.HasSuffix(entry.Name(), ".js") {
-			qb.Log.Info("Skipped file " + entry.Name())
+			qb.Log.Infof("Skipped file " + entry.Name())
 			continue
 		}
 
