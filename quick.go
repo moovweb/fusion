@@ -34,6 +34,7 @@ func NewQuickBundler(bundlesPath string, logger *golog.Logger) (*QuickBundlerIns
 	b.Bundles = bundles
 	b.ProjectPath = *projectPath
 	b.Log = logger
+	b.Version = "0.1"
 
 	return b, nil
 }
@@ -67,11 +68,21 @@ func (qb *QuickBundlerInstance) Run() []error {
 
 		data = ""
 
+		includeVersion := true
+		if config[":include_version"] != nil {
+			if config[":include_version"].(bool) == false {
+				includeVersion = false
+			}
+		}
+		if includeVersion == true {
+			data += "// Bundled with Fusion v"+qb.Version+"\n\n"
+		}
+
 		protected := false
 		if config[":protected"] != nil {
 			if config[":protected"].(bool) == true {
 				protected = true
-				data = "(function() {"
+				data += "(function() {"
 			}
 		}
 
