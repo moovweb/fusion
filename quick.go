@@ -55,7 +55,8 @@ func (qb *QuickBundlerInstance) Run() []error {
 
 	errors := make([]error, 0)
 
-	for _, config := range qb.Bundles {
+	for _, rawConfig := range qb.Bundles {
+		config := rawConfig.(map[interface{}]interface{})
 
 		inputFiles, err := qb.gatherFiles(config)
 
@@ -65,6 +66,14 @@ func (qb *QuickBundlerInstance) Run() []error {
 		}
 
 		data = ""
+
+		protected := false
+		if config[":protected"] != nil {
+			if config[":protected"].(bool) == true {
+				protected = true
+				data = "(function() {"
+			}
+		}
 
 		for _, inputFile := range inputFiles {
 
@@ -85,6 +94,10 @@ func (qb *QuickBundlerInstance) Run() []error {
 
 		}
 
+		if protected == true {
+			data += "\n})();"
+		}
+
 		outputFile := qb.getOutputFile(config)
 
 		err = ioutil.WriteFile(outputFile, []uint8(data), os.FileMode(0644))
@@ -101,8 +114,7 @@ func (qb *QuickBundlerInstance) Run() []error {
 
 /****** TODO(SJ): Put these in a base struct and inherit these methods ******/
 
-func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []string, error error) {
-	config := rawConfig.(map[interface{}]interface{})
+func (qb *QuickBundlerInstance) gatherFiles(config map[interface{}]interface{}) (filenames []string, error error) {
 
 	var files []interface{}
 
@@ -131,41 +143,52 @@ func (qb *QuickBundlerInstance) gatherFiles(rawConfig interface{}) (filenames []
 		}
 	}
 
+	// for backwards compatibility
 	var inputDirectory string
-
 	if config[":input_directory"] != nil {
 		inputDirectory = config[":input_directory"].(string)
 	}
 
-	var entries []os.FileInfo
-	var absoluteDirectoryPath string
+	var inputDirs []interface{}
+	if config[":input_directories"] != nil {
+		inputDirs = config[":input_directories"].([]interface{})
+	}
 
-	if len(inputDirectory) != 0 {
-		absoluteDirectoryPath = qb.Absolutize(inputDirectory)
+	inputDirs = append(inputDirs, interface{}(inputDirectory))
 
-		if !strings.Contains(absoluteDirectoryPath, qb.ProjectPath) {
-			qb.Log.Warningf("'%s' lies outside of the '/assets/javascript' directory; skipped.", inputDirectory)
-		} else {
-			newEntries, err := ioutil.ReadDir(absoluteDirectoryPath)
-			if err != nil {
-				qb.Log.Warningf("Cannot read input directory: " + absoluteDirectoryPath)
+	var entries []string
+
+	for _, rawDir := range inputDirs {
+		dir := rawDir.(string)
+		if len(dir) != 0 {
+			absDir := qb.Absolutize(dir)
+
+			if !strings.Contains(absDir, qb.ProjectPath) {
+				qb.Log.Warningf("'%s' lies outside of the '/assets/javascript' directory; skipped.", absDir)
 			} else {
-				entries = newEntries
+				newEntries, err := ioutil.ReadDir(absDir)
+				if err != nil {
+					qb.Log.Warningf("Cannot read input directory: " + absDir)
+				} else {
+					for _, entry := range newEntries {
+						entries = append(entries, filepath.Join(absDir, entry.Name()))
+					}
+				}
 			}
 		}
 	}
 
 	for _, entry := range entries {
-		if strings.HasPrefix(entry.Name(), ".") {
-			qb.Log.Infof("Skipped file " + entry.Name())
+		if strings.HasPrefix(entry, ".") {
+			qb.Log.Infof("Skipped file " + entry)
 			continue
 		}
-		if !strings.HasSuffix(entry.Name(), ".js") {
-			qb.Log.Infof("Skipped file " + entry.Name())
+		if !strings.HasSuffix(entry, ".js") {
+			qb.Log.Infof("Skipped file " + entry)
 			continue
 		}
 
-		filenames = append(filenames, filepath.Join(absoluteDirectoryPath, entry.Name()))
+		filenames = append(filenames, entry)
 	}
 
 	return filenames, nil
@@ -218,9 +241,7 @@ func (qb *QuickBundlerInstance) getRemoteFile(url string) (string, error) {
 	return path, nil
 }
 
-func (qb *QuickBundlerInstance) getOutputFile(rawConfig interface{}) (path string) {
-	config := rawConfig.(map[interface{}]interface{})
-
+func (qb *QuickBundlerInstance) getOutputFile(config map[interface{}]interface{}) (path string) {
 	outputFile := config[":output_file"].(string)
 
 	if len(outputFile) == 0 {
