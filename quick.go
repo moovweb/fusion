@@ -54,7 +54,7 @@ func (qb *QuickBundlerInstance) Run() []error {
 
 	var data string
 
-	errors := make([]error, 0)
+	errArr := make([]error, 0)
 
 	for _, rawConfig := range qb.Bundles {
 		config := rawConfig.(map[interface{}]interface{})
@@ -63,7 +63,7 @@ func (qb *QuickBundlerInstance) Run() []error {
 
 		if err != nil {
 			qb.Log.Infof("Couldn't create bundle: %v", err)
-			errors = append(errors, err)
+			errArr = append(errArr, err)
 		}
 
 		data = ""
@@ -71,6 +71,10 @@ func (qb *QuickBundlerInstance) Run() []error {
 		includeVersion := true
 		if config[":include_version"] != nil {
 			if config[":include_version"].(bool) == false {
+				includeVersion = false
+			}
+		} else if config["include_version"] != nil {
+			if config["include_version"].(bool) == false {
 				includeVersion = false
 			}
 		}
@@ -84,6 +88,11 @@ func (qb *QuickBundlerInstance) Run() []error {
 				protected = true
 				data += "(function() {"
 			}
+		} else if config["protected"] != nil {
+			if config["protected"].(bool) == true {
+				protected = true
+				data += "(function() {"
+			}
 		}
 
 		for _, inputFile := range inputFiles {
@@ -91,7 +100,7 @@ func (qb *QuickBundlerInstance) Run() []error {
 			rawJS, err := ioutil.ReadFile(inputFile)
 
 			if err != nil {
-				errors = append(errors, err)
+				errArr = append(errArr, err)
 				continue
 			}
 
@@ -110,17 +119,21 @@ func (qb *QuickBundlerInstance) Run() []error {
 		}
 
 		outputFile := qb.getOutputFile(config)
+		if strings.Index(outputFile, "ERROR: ") != -1 {
+			errArr = append(errArr, errors.New(outputFile[6:]))
+			return errArr
+		}
 
 		err = ioutil.WriteFile(outputFile, []uint8(data), os.FileMode(0644))
 
 		if err != nil {
 			qb.Log.Infof("Couldn't write output js (%v): %v", outputFile, err)
-			errors = append(errors, err)
+			errArr = append(errArr, err)
 		}
 
 	}
 
-	return errors
+	return errArr
 }
 
 /****** TODO(SJ): Put these in a base struct and inherit these methods ******/
@@ -131,6 +144,10 @@ func (qb *QuickBundlerInstance) gatherFiles(config map[interface{}]interface{}) 
 
 	if config[":input_files"] != nil {
 		files = config[":input_files"].([]interface{})
+	} else if config["input_files"] != nil {
+		files = config["input_files"].([]interface{})
+	} else {
+		qb.Log.Warningf("No input files specified, this might be an error. Please check to make sure it's not.")
 	}
 
 	for _, rawInputFile := range files {
@@ -158,11 +175,17 @@ func (qb *QuickBundlerInstance) gatherFiles(config map[interface{}]interface{}) 
 	var inputDirectory string
 	if config[":input_directory"] != nil {
 		inputDirectory = config[":input_directory"].(string)
+	} else if config["input_directory"] != nil {
+		inputDirectory = config["input_directory"].(string)
+	} else {
+		qb.Log.Warningf("No input directory specified, this might be an error. Please check to make sure it's not.")
 	}
 
 	var inputDirs []interface{}
 	if config[":input_directories"] != nil {
 		inputDirs = config[":input_directories"].([]interface{})
+	} else if config["input_directories"] != nil {
+		inputDirs = config["input_directories"].([]interface{})
 	}
 
 	inputDirs = append(inputDirs, interface{}(inputDirectory))
@@ -253,10 +276,17 @@ func (qb *QuickBundlerInstance) getRemoteFile(url string) (string, error) {
 }
 
 func (qb *QuickBundlerInstance) getOutputFile(config map[interface{}]interface{}) (path string) {
-	outputFile := config[":output_file"].(string)
-
+	var outputFile string
+	if config[":output_file"] != nil {
+		outputFile = config[":output_file"].(string)
+	} else if config["output_file"] != nil {
+		outputFile = config["output_file"].(string)		
+	} else {
+		return "ERROR: No output file specified, please specify an :output_file in bundles.yml."
+	}
+	
 	if len(outputFile) == 0 {
-		panic("Bundle missing output file.")
+		return "ERROR: Bundle missing output file."
 	}
 
 	return filepath.Join(qb.ProjectPath, outputFile)
