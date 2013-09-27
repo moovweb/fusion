@@ -45,7 +45,17 @@ func (qb *QuickBundlerInstance) GetConfig(conf string) []interface{} {
 		config := rawConfig.(map[interface{}]interface{})
 		if config[conf] != nil {
 			results = append(results, config[conf])
-		}
+		} else if conf[0] == ":" {
+			conf = conf[1:]
+			if config[conf] != nil {
+				results = append(results, config[conf])
+			}
+		} else {
+			conf = ":" + conf
+			if config[conf] != nil {
+				results = append(results, config[conf])
+			}
+		} 
 	}
 	return results
 }
