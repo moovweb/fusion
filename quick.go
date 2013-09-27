@@ -118,9 +118,9 @@ func (qb *QuickBundlerInstance) Run() []error {
 			data += "\n})();"
 		}
 
-		outputFile := qb.getOutputFile(config)
-		if strings.Index(outputFile, "ERROR: ") != -1 {
-			errArr = append(errArr, errors.New(outputFile[6:]))
+		outputFile, err := qb.getOutputFile(config)
+		if err != nil {
+			errArr = append(errArr, err)
 			return errArr
 		}
 
@@ -275,21 +275,21 @@ func (qb *QuickBundlerInstance) getRemoteFile(url string) (string, error) {
 	return path, nil
 }
 
-func (qb *QuickBundlerInstance) getOutputFile(config map[interface{}]interface{}) (path string) {
+func (qb *QuickBundlerInstance) getOutputFile(config map[interface{}]interface{}) (string, error) {
 	var outputFile string
 	if config[":output_file"] != nil {
 		outputFile = config[":output_file"].(string)
 	} else if config["output_file"] != nil {
 		outputFile = config["output_file"].(string)		
 	} else {
-		return "ERROR: No output file specified, please specify an :output_file in bundles.yml."
+		return "", errors.New("No output file specified, please specify an :output_file in bundles.yml.")
 	}
 	
 	if len(outputFile) == 0 {
-		return "ERROR: Bundle missing output file."
+		return "", errors.New("Bundle missing output file.")
 	}
 
-	return filepath.Join(qb.ProjectPath, outputFile)
+	return filepath.Join(qb.ProjectPath, outputFile), nil
 }
 
 /* Helper Functions */
