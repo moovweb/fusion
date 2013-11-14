@@ -23,7 +23,7 @@ type QuickBundlerInstance struct {
 	Log *golog.Logger
 }
 
-func NewQuickBundler(bundlesPath string, logger *golog.Logger) (*QuickBundlerInstance, error) {
+func NewQuickBundler(rootProjPath, bundlesPath string, logger *golog.Logger) (*QuickBundlerInstance, error) {
 	bundles, projectPath, err := getBundles(bundlesPath)
 
 	if err != nil {
@@ -33,6 +33,7 @@ func NewQuickBundler(bundlesPath string, logger *golog.Logger) (*QuickBundlerIns
 	b := &QuickBundlerInstance{}
 	b.Bundles = bundles
 	b.ProjectPath = *projectPath
+	b.RootProjectPath = rootProjPath
 	b.Log = logger
 	b.Version = "0.1"
 
@@ -173,10 +174,11 @@ func (qb *QuickBundlerInstance) gatherFiles(config map[interface{}]interface{}) 
 		} else {
 			absolutePath := qb.Absolutize(inputFile)
 
-			if strings.Contains(absolutePath, qb.ProjectPath) {
+			// if strings.Contains(absolutePath, qb.ProjectPath) {
+			if strings.HasPrefix(absolutePath, qb.RootProjectPath) {
 				filenames = append(filenames, absolutePath)
 			} else {
-				qb.Log.Warningf("'%s' lies outside of the '/assets/javascript' directory; skipped.", inputFile)
+				qb.Log.Warningf("'%s' lies outside of the project folder; skipped.", inputFile)
 			}
 		}
 	}
@@ -207,7 +209,8 @@ func (qb *QuickBundlerInstance) gatherFiles(config map[interface{}]interface{}) 
 		if len(dir) != 0 {
 			absDir := qb.Absolutize(dir)
 
-			if !strings.Contains(absDir, qb.ProjectPath) {
+			// if !strings.Contains(absDir, qb.ProjectPath) {
+			if !strings.HasPrefix(absDir, qb.RootProjectPath) {
 				qb.Log.Warningf("'%s' lies outside of the '/assets/javascript' directory; skipped.", absDir)
 			} else {
 				newEntries, err := ioutil.ReadDir(absDir)
