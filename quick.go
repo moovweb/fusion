@@ -2,7 +2,7 @@ package fusion
 
 import (
 	"errors"
-	"golog"
+	"github.com/moovweb/golog"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -13,7 +13,7 @@ import (
 
 /* Quick Bundler Instance */
 /*
- * TODO(SJ): 
+ * TODO(SJ):
  *     - everytime I can throw a panic, wrap in a function so I can handle it w a defer nicely
  *     - move base functions into a base class and promote the the base interface
  */
@@ -55,7 +55,7 @@ func (qb *QuickBundlerInstance) GetConfig(conf string) []interface{} {
 			if config[conf] != nil {
 				results = append(results, config[conf])
 			}
-		} 
+		}
 	}
 	return results
 }
@@ -89,7 +89,7 @@ func (qb *QuickBundlerInstance) Run() []error {
 			}
 		}
 		if includeVersion == true {
-			data += "// Bundled with Fusion v"+qb.Version+"\n\n"
+			data += "// Bundled with Fusion v" + qb.Version + "\n\n"
 		}
 
 		protected := false
@@ -290,11 +290,11 @@ func (qb *QuickBundlerInstance) getOutputFile(config map[interface{}]interface{}
 	if config[":output_file"] != nil {
 		outputFile = config[":output_file"].(string)
 	} else if config["output_file"] != nil {
-		outputFile = config["output_file"].(string)		
+		outputFile = config["output_file"].(string)
 	} else {
 		return "", errors.New("No output file specified, please specify an :output_file in bundles.yml.")
 	}
-	
+
 	if len(outputFile) == 0 {
 		return "", errors.New("Bundle missing output file.")
 	}

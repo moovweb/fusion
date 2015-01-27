@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fusion"
-	"golog"
 	"os"
+
+	"github.com/moovweb/fusion"
+	"github.com/moovweb/golog"
 )
 
 func main() {

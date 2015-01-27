@@ -1,7 +1,7 @@
 package fusion
 
 import (
-	yaml "goyaml"
+	yaml "gopkg.in/yaml.v2"
 	"io/ioutil"
 	"path/filepath"
 )
