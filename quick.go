@@ -2,13 +2,16 @@ package fusion
 
 import (
 	"errors"
-	"github.com/moovweb/golog"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
+
+	"github.com/moovweb/golog"
 )
 
 /* Quick Bundler Instance */
@@ -17,6 +20,11 @@ import (
  *     - everytime I can throw a panic, wrap in a function so I can handle it w a defer nicely
  *     - move base functions into a base class and promote the the base interface
  */
+const (
+	SINGULAR_CONV_ERR = "Couldn't convert input directory into string. Make sure the field in bundles.yml is a line rather than a list."
+	PLURAL_ARRAY_ERR  = "Input directories should be an array. Make sure the field in bundles.yml is a list rather than a line."
+	NO_SINGULAR_WARN  = "No input directory specified, this might be an error. Please check to make sure it's not."
+)
 
 type QuickBundlerInstance struct {
 	bundlerInstance
@@ -148,7 +156,7 @@ func (qb *QuickBundlerInstance) Run() []error {
 
 /****** TODO(SJ): Put these in a base struct and inherit these methods ******/
 
-func (qb *QuickBundlerInstance) gatherFiles(config map[interface{}]interface{}) (filenames []string, error error) {
+func (qb *QuickBundlerInstance) gatherFiles(config map[interface{}]interface{}) (filenames []string, err error) {
 
 	var files []interface{}
 
@@ -165,8 +173,8 @@ func (qb *QuickBundlerInstance) gatherFiles(config map[interface{}]interface{}) 
 
 		if isURL(inputFile) {
 			var path string
-			path, error = qb.getRemoteFile(inputFile)
-			if error != nil {
+			path, err = qb.getRemoteFile(inputFile)
+			if err != nil {
 				return
 			}
 			filenames = append(filenames, path)
@@ -181,24 +189,10 @@ func (qb *QuickBundlerInstance) gatherFiles(config map[interface{}]interface{}) 
 		}
 	}
 
-	// for backwards compatibility
-	var inputDirectory string
-	if config[":input_directory"] != nil {
-		inputDirectory = config[":input_directory"].(string)
-	} else if config["input_directory"] != nil {
-		inputDirectory = config["input_directory"].(string)
-	} else {
-		qb.Log.Warningf("No input directory specified, this might be an error. Please check to make sure it's not.")
+	inputDirs, err := qb.getInputDirs(config)
+	if err != nil {
+		return
 	}
-
-	var inputDirs []interface{}
-	if config[":input_directories"] != nil {
-		inputDirs = config[":input_directories"].([]interface{})
-	} else if config["input_directories"] != nil {
-		inputDirs = config["input_directories"].([]interface{})
-	}
-
-	inputDirs = append(inputDirs, interface{}(inputDirectory))
 
 	var entries []string
 
@@ -236,6 +230,47 @@ func (qb *QuickBundlerInstance) gatherFiles(config map[interface{}]interface{}) 
 	}
 
 	return filenames, nil
+}
+
+func (qb *QuickBundlerInstance) getInputDirs(config map[interface{}]interface{}) (inputDirs []interface{}, err error) {
+	// for backwards compatibility
+	var inputDirectory string
+
+	inputDirOld := config[":input_directory"]
+	if inputDirOld == nil {
+		inputDirOld = config["input_directory"]
+	}
+	if inputDirOld != nil {
+		if str, ok := inputDirOld.(string); ok {
+			inputDirectory = str
+		} else {
+			err = fmt.Errorf(SINGULAR_CONV_ERR)
+			return inputDirs, err
+		}
+	} else {
+		qb.Log.Warningf(NO_SINGULAR_WARN)
+	}
+
+	inputDirNew := config[":input_directories"]
+	if inputDirNew == nil {
+		inputDirNew = config["input_directories"]
+	}
+	if inputDirNew != nil {
+		v := reflect.ValueOf(inputDirNew)
+		if v.Kind() != reflect.Slice {
+			err = fmt.Errorf(PLURAL_ARRAY_ERR)
+			return inputDirs, err
+		}
+		for i := 0; i < v.Len(); i++ {
+			inputDirs = append(inputDirs, v.Index(i).Interface())
+		}
+	}
+
+	if inputDirectory != "" {
+		inputDirs = append(inputDirs, interface{}(inputDirectory))
+	}
+
+	return inputDirs, err
 }
 
 func (qb *QuickBundlerInstance) getRemoteFile(url string) (string, error) {
