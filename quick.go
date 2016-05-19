@@ -31,7 +31,7 @@ type QuickBundlerInstance struct {
 	Log *golog.Logger
 }
 
-func NewQuickBundler(bundlesPath string, logger *golog.Logger) (*QuickBundlerInstance, error) {
+func NewQuickBundler(bundlesPath, outputPath string, logger *golog.Logger) (*QuickBundlerInstance, error) {
 	bundles, projectPath, err := getBundles(bundlesPath)
 
 	if err != nil {
@@ -41,6 +41,7 @@ func NewQuickBundler(bundlesPath string, logger *golog.Logger) (*QuickBundlerIns
 	b := &QuickBundlerInstance{}
 	b.Bundles = bundles
 	b.ProjectPath = *projectPath
+	b.OutputPath = outputPath
 	b.Log = logger
 	b.Version = "0.1"
 
@@ -142,6 +143,13 @@ func (qb *QuickBundlerInstance) Run() []error {
 			return errArr
 		}
 
+		if _, err = os.Stat(qb.OutputPath); os.IsNotExist(err) {
+			err = os.MkdirAll(qb.OutputPath, os.FileMode(0755))
+			if err != nil {
+				errArr = append(errArr, err)
+				return errArr
+			}
+		}
 		err = ioutil.WriteFile(outputFile, []uint8(data), os.FileMode(0644))
 
 		if err != nil {
@@ -334,7 +342,7 @@ func (qb *QuickBundlerInstance) getOutputFile(config map[interface{}]interface{}
 		return "", errors.New("Bundle missing output file.")
 	}
 
-	return filepath.Join(qb.ProjectPath, outputFile), nil
+	return filepath.Join(qb.OutputPath, outputFile), nil
 }
 
 /* Helper Functions */

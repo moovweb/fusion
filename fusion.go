@@ -8,6 +8,7 @@ import (
 
 type bundlerInstance struct {
 	ProjectPath string
+	OutputPath  string
 	Version     string
 	Bundles     []interface{}
 }
