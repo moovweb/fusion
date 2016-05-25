@@ -143,23 +143,35 @@ func (qb *QuickBundlerInstance) Run() []error {
 			return errArr
 		}
 
-		if _, err = os.Stat(qb.OutputPath); os.IsNotExist(err) {
-			err = os.MkdirAll(qb.OutputPath, os.FileMode(0755))
-			if err != nil {
-				errArr = append(errArr, err)
-				return errArr
-			}
-		}
-		err = ioutil.WriteFile(outputFile, []uint8(data), os.FileMode(0644))
-
+		// Output files to the ProjectPath and the OutputPath
+		outputLocs := []string{filepath.Join(qb.ProjectPath, outputFile), filepath.Join(qb.OutputPath, outputFile)}
+		err = qb.generateFiles(data, outputLocs)
 		if err != nil {
-			qb.Log.Infof("Couldn't write output js (%v): %v", outputFile, err)
 			errArr = append(errArr, err)
+			return errArr
 		}
-
 	}
 
 	return errArr
+}
+
+func (qb *QuickBundlerInstance) generateFiles(data string, destinations []string) (err error) {
+	for _, dest := range destinations {
+		destDir := filepath.Dir(dest)
+		if _, err = os.Stat(destDir); os.IsNotExist(err) {
+			err = os.MkdirAll(destDir, os.FileMode(0755))
+			if err != nil {
+				qb.Log.Infof("Couldn't create folder (%v): %v", destDir, err)
+				return
+			}
+		}
+		err = ioutil.WriteFile(dest, []uint8(data), os.FileMode(0644))
+		if err != nil {
+			qb.Log.Infof("Couldn't write output js (%v): %v", dest, err)
+			return
+		}
+	}
+	return
 }
 
 /****** TODO(SJ): Put these in a base struct and inherit these methods ******/
@@ -342,7 +354,7 @@ func (qb *QuickBundlerInstance) getOutputFile(config map[interface{}]interface{}
 		return "", errors.New("Bundle missing output file.")
 	}
 
-	return filepath.Join(qb.OutputPath, outputFile), nil
+	return outputFile, nil
 }
 
 /* Helper Functions */
